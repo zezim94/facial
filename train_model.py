@@ -24,4 +24,3 @@ def get_images_and_labels(path):
 faces, ids = get_images_and_labels(path)
 recognizer.train(faces, ids)
 recognizer.save('trainer.yml')
-
