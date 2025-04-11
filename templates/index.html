@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda de Avisos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+  <h2>Agenda de Avisos</h2>
+
+  <form action="/adicionar" method="POST" class="mb-4">
+    <input name="titulo" class="form-control mb-2" placeholder="Título do aviso" required>
+    <textarea name="descricao" class="form-control mb-2" placeholder="Descrição" required></textarea>
+    <button class="btn btn-primary">Adicionar Aviso</button>
+  </form>
+
+  <div>
+    {% for aviso in avisos %}
+      <div class="alert alert-info">
+        <strong>{{ aviso[1] }}</strong><br>
+        {{ aviso[2] }}<br>
+        <small>{{ aviso[3] }}</small>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

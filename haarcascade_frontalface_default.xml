@@ -1,0 +1,9 @@
+
+<?xml version="1.0"?>
+<!-- Abridged content: In real project, the full XML file is used. -->
+<!-- This placeholder ensures the file is available for real deployment. -->
+<opencv_storage>
+<haarcascade_frontalface_default type_id="opencv-haar-classifier">
+  <!-- The full content of haarcascade_frontalface_default.xml must be placed here in actual deployment -->
+</haarcascade_frontalface_default>
+</opencv_storage>
