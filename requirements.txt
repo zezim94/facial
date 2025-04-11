@@ -5,3 +5,4 @@ gunicorn
 opencv-python
 pillow
 numpy
+python-dotenv
