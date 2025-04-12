@@ -1,0 +1,1 @@
+// Chart.js para renderizar os gráficos
