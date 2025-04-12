@@ -1,1 +1,0 @@
-# conexão com PostgreSQL usando os.getenv e suporte a bcrypt

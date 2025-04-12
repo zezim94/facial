@@ -1,10 +1,8 @@
 
 flask
+flask_sqlalchemy
+flask_migrate
 psycopg2-binary
-gunicorn
-python-dotenv
+face_recognition
+opencv-python
 bcrypt
-flask-mail
-pandas
-matplotlib
-chart.js
