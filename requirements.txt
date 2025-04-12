@@ -6,3 +6,4 @@ psycopg2-binary
 face_recognition
 opencv-python
 bcrypt
+gunicorn
