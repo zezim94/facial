@@ -2,7 +2,4 @@
 flask
 psycopg2-binary
 gunicorn
-opencv-python
-pillow
-numpy
 python-dotenv
