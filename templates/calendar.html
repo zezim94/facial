@@ -1,0 +1,29 @@
+
+{% extends 'base.html' %}
+{% block title %}Calendário{% endblock %}
+{% block content %}
+<h2>Seus Eventos</h2>
+<a href="{{ url_for('new_event') }}" class="btn btn-primary mb-3">Novo Evento</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Título</th><th>Início</th><th>Fim</th><th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in events %}
+        <tr>
+            <td>{{ event.title }}</td>
+            <td>{{ event.start_time }}</td>
+            <td>{{ event.end_time }}</td>
+            <td>
+                <a href="{{ url_for('edit_event', event_id=event.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                <form method="POST" action="{{ url_for('delete_event', event_id=event.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

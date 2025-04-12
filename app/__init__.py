@@ -1,12 +1,16 @@
 
 from flask import Flask
-from db import db
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+from db import db
+import os
+
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = 'supersecretkey'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://adm:bdunwFc6lvwAotvqDdKvRX4eDjHspy4a@dpg-cvskeq9r0fns73cbad20-a/facialdb_fj3i'
+    app.secret_key = os.getenv("FLASK_SECRET_KEY", "default")
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
@@ -17,5 +21,4 @@ def create_app():
 
     from .views import main
     app.register_blueprint(main)
-
     return app

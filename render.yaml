@@ -1,7 +1,6 @@
 
 services:
   - type: web
-    name: app-integrado-flask-php
+    name: facial-php-flask
     env: docker
     dockerfilePath: ./Dockerfile
-    plan: free

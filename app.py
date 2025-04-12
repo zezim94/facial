@@ -1,77 +1,107 @@
 
-from flask import Flask, render_template, request, redirect, session, url_for, flash
-from db import db
-from models import User
-from camera import capture_face_encoding_and_image, match_face
-import bcrypt
-from flask_migrate import Migrate
+from flask import Flask, render_template, redirect, url_for, request, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, login_required, logout_user, UserMixin, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+from models import db, User, Event
+from forms import LoginForm, RegisterForm, EventForm
 import os
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgresql://adm:bdunwFc6lvwAotvqDdKvRX4eDjHspy4a@dpg-cvskeq9r0fns73cbad20-a/facialdb_fj3i'
+app.config['SECRET_KEY'] = 'supersecretkey'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///calendar.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
-migrate = Migrate(app, db)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-with app.app_context():
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.before_first_request
+def create_tables():
     db.create_all()
 
 @app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        password = bcrypt.hashpw(request.form['password'].encode(), bcrypt.gensalt())
-        role = request.form.get('role') or 'user'
-        encoding, face_image = capture_face_encoding_and_image()
-
-        if encoding:
-            user = User(name=name, email=email, password=password, role=role, encoding=encoding, image=face_image)
-            db.session.add(user)
-            db.session.commit()
-            flash("Usuário cadastrado com sucesso!", "success")
-            return redirect(url_for('login'))
-        else:
-            flash("Rosto não detectado. Tente novamente.", "danger")
-    return render_template('register.html')
+@login_required
+def calendar():
+    events = Event.query.filter_by(user_id=current_user.id).all()
+    return render_template('calendar.html', events=events)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form['email']
-        user = User.query.filter_by(email=email).first()
-        if user and match_face(user.encoding):
-            session['user_id'] = user.id
-            return redirect(url_for('dashboard'))
-        flash("Rosto não reconhecido ou usuário inválido.", "danger")
-    return render_template('login.html')
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            return redirect(url_for('calendar'))
+        flash('Usuário ou senha inválidos.')
+    return render_template('login.html', form=form)
 
-@app.route('/dashboard')
-def dashboard():
-    user = User.query.get(session.get('user_id'))
-    if not user:
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        hashed_pw = generate_password_hash(form.password.data)
+        new_user = User(username=form.username.data, password=hashed_pw)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Usuário registrado com sucesso!')
         return redirect(url_for('login'))
-    return render_template('dashboard.html', user=user)
-
-@app.route('/admin')
-def admin():
-    user = User.query.get(session.get('user_id'))
-    if not user or user.role != 'admin':
-        flash("Acesso negado.", "danger")
-        return redirect(url_for('dashboard'))
-    users = User.query.all()
-    return render_template('admin.html', users=users)
+    return render_template('register.html', form=form)
 
 @app.route('/logout')
+@login_required
 def logout():
-    session.clear()
-    return redirect(url_for('index'))
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.route('/event/new', methods=['GET', 'POST'])
+@login_required
+def new_event():
+    form = EventForm()
+    if form.validate_on_submit():
+        event = Event(
+            title=form.title.data,
+            description=form.description.data,
+            start_time=form.start_time.data,
+            end_time=form.end_time.data,
+            user_id=current_user.id
+        )
+        db.session.add(event)
+        db.session.commit()
+        return redirect(url_for('calendar'))
+    return render_template('event_form.html', form=form, title='Novo Evento')
+
+@app.route('/event/edit/<int:event_id>', methods=['GET', 'POST'])
+@login_required
+def edit_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if event.user_id != current_user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('calendar'))
+    form = EventForm(obj=event)
+    if form.validate_on_submit():
+        event.title = form.title.data
+        event.description = form.description.data
+        event.start_time = form.start_time.data
+        event.end_time = form.end_time.data
+        db.session.commit()
+        return redirect(url_for('calendar'))
+    return render_template('event_form.html', form=form, title='Editar Evento')
+
+@app.route('/event/delete/<int:event_id>', methods=['POST'])
+@login_required
+def delete_event(event_id):
+    event = Event.query.get_or_404(event_id)
+    if event.user_id == current_user.id:
+        db.session.delete(event)
+        db.session.commit()
+    return redirect(url_for('calendar'))
 
 if __name__ == '__main__':
     app.run(debug=True)
